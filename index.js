@@ -15,33 +15,25 @@ const io = socketIo(server, {
 app.use(cors());
 
 const PORT = process.env.PORT || 3000;
-
-let activeUsers = 0;
-
 io.on("connection", (socket) => {
-  if (activeUsers >= 3) {
-    socket.emit("deny", "Дождитесь своей очереди");
-    socket.disconnect();
-    return;
-  }
+  // Отправляем текущие результаты новому подключенному клиенту
+  socket.emit("updateVotes", votes);
 
-  activeUsers++;
-  io.emit("user_count", activeUsers);
+  // Обрабатываем голосование
+  socket.on("vote", (vote) => {
+    if (vote.option === "option1") {
+      votes.option1++;
+    } else if (vote.option === "option2") {
+      votes.option2++;
+    }
 
-  socket.on("disconnect", () => {
-    activeUsers--;
-    io.emit("user_count", activeUsers);
-  });
-
-  socket.on("edit", (data) => {
-    socket.broadcast.emit("edit", data);
-  });
-
-  socket.on("cursor_move", (data) => {
-    socket.broadcast.emit("cursor_move", data);
+    // Рассылаем обновленные результаты всем подключенным клиентам
+    io.emit("updateVotes", votes);
   });
 });
 
-server.listen(3000, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.use(express.static("public"));
+
+server.listen(8080, () => {
+  console.log(`Server started on port ${PORT}`);
 });
