@@ -1,16 +1,20 @@
 const express = require("express");
 const http = require("http");
+const socketIo = require("socket.io");
 const cors = require("cors");
-const { Server } = require("socket.io");
 
 const app = express();
-const server = http.createServer(app, {
+const server = http.createServer(app);
+const io = socketIo(server, {
   cors: {
     origin: "*", // или укажите конкретный origin, если требуется
     methods: ["GET", "POST"],
   },
 });
-const io = new Server(server);
+
+app.use(cors());
+
+const PORT = process.env.PORT || 3000;
 
 let activeUsers = 0;
 
@@ -39,5 +43,5 @@ io.on("connection", (socket) => {
 });
 
 server.listen(3000, () => {
-  console.log("Server is running on port 3000");
+  console.log(`Server is running on port ${PORT}`);
 });
