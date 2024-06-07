@@ -1,54 +1,37 @@
 const express = require("express");
 const http = require("http");
-const socketIo = require("socket.io");
-const cors = require("cors");
+const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: "*", // или укажите конкретный origin, если требуется
-    methods: ["GET", "POST"],
-  },
-});
+const io = new Server(server);
 
-app.use(cors());
-
-const PORT = process.env.PORT || 3000;
-
-let users = [];
-let documentContent = "";
+let activeUsers = 0;
 
 io.on("connection", (socket) => {
-  console.log("A user connected:", socket.id);
+  if (activeUsers >= 3) {
+    socket.emit("deny", "Дождитесь своей очереди");
+    socket.disconnect();
+    return;
+  }
 
-  socket.on("join", (username) => {
-    if (users.length < 3) {
-      users.push({ id: socket.id, username });
-      io.to(socket.id).emit("allowEdit", true);
-      io.emit("updateUsers", users);
-      io.to(socket.id).emit("document", documentContent);
-    } else {
-      io.to(socket.id).emit("allowEdit", false);
-      io.to(socket.id).emit("message", "Дождитесь своей очереди");
-    }
-  });
+  activeUsers++;
+  io.emit("user_count", activeUsers);
 
   socket.on("disconnect", () => {
-    users = users.filter((user) => user.id !== socket.id);
-    io.emit("updateUsers", users);
+    activeUsers--;
+    io.emit("user_count", activeUsers);
   });
 
-  socket.on("edit", (content) => {
-    documentContent = content;
-    socket.broadcast.emit("document", documentContent);
+  socket.on("edit", (data) => {
+    socket.broadcast.emit("edit", data);
   });
 
-  socket.on("cursorMove", (cursorData) => {
-    socket.broadcast.emit("cursorMove", cursorData);
+  socket.on("cursor_move", (data) => {
+    socket.broadcast.emit("cursor_move", data);
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+server.listen(3000, () => {
+  console.log("Server is running on port 3000");
 });
