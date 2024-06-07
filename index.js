@@ -1,9 +1,15 @@
 const express = require("express");
 const http = require("http");
+const cors = require("cors");
 const { Server } = require("socket.io");
 
 const app = express();
-const server = http.createServer(app);
+const server = http.createServer(app, {
+  cors: {
+    origin: "*", // или укажите конкретный origin, если требуется
+    methods: ["GET", "POST"],
+  },
+});
 const io = new Server(server);
 
 let activeUsers = 0;
