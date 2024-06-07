@@ -15,6 +15,8 @@ const io = socketIo(server, {
 app.use(cors());
 
 const PORT = process.env.PORT || 3000;
+let votes = { option1: 0, option2: 0 };
+
 io.on("connection", (socket) => {
   // Отправляем текущие результаты новому подключенному клиенту
   socket.emit("updateVotes", votes);
