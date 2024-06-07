@@ -32,8 +32,6 @@ io.on("connection", (socket) => {
   });
 });
 
-app.use(express.static("public"));
-
 server.listen(8080, () => {
   console.log(`Server started on port ${PORT}`);
 });
